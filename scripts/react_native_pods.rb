@@ -43,6 +43,10 @@ def use_react_native! (
   app_path: '..',
   config_file_dir: '')
 
+  CodegenUtils.clean_up_build_folder(app_path, $CODEGEN_OUTPUT_DIR)
+
+  fabric_enabled = fabric_enabled || new_arch_enabled
+
   prefix = path
 
   # The version of folly that must be used
@@ -58,6 +62,7 @@ def use_react_native! (
   pod 'React', :path => "#{prefix}/"
   pod 'React-Core', :path => "#{prefix}/"
   pod 'React-CoreModules', :path => "#{prefix}/React/CoreModules"
+  pod 'React-RCTAppDelegate', :path => "#{prefix}/Libraries/AppDelegate"
   pod 'React-RCTActionSheet', :path => "#{prefix}/Libraries/ActionSheetIOS"
   pod 'React-RCTAnimation', :path => "#{prefix}/Libraries/NativeAnimation"
   pod 'React-RCTBlob', :path => "#{prefix}/Libraries/Blob"
@@ -156,6 +161,7 @@ def react_native_post_install(installer, react_native_path = "../node_modules/re
 
   ReactNativePodsUtils.exclude_i386_architecture_while_using_hermes(installer)
   ReactNativePodsUtils.fix_library_search_paths(installer)
+  ReactNativePodsUtils.fix_react_bridging_header_search_paths(installer)
   ReactNativePodsUtils.set_node_modules_user_settings(installer, react_native_path)
 
   NewArchitectureHelper.set_clang_cxx_language_standard_if_needed(installer)
@@ -289,5 +295,5 @@ def __apply_Xcode_12_5_M1_post_install_workaround(installer)
   # We need to make a patch to RCT-Folly - remove the `__IPHONE_OS_VERSION_MIN_REQUIRED` check.
   # See https://github.com/facebook/flipper/issues/834 for more details.
   time_header = "#{Pod::Config.instance.installation_root.to_s}/Pods/RCT-Folly/folly/portability/Time.h"
-  `sed -i -e  $'s/ && (__IPHONE_OS_VERSION_MIN_REQUIRED < __IPHONE_10_0)//' #{time_header}`
+  `sed -i -e  $'s/ && (__IPHONE_OS_VERSION_MIN_REQUIRED < __IPHONE_10_0)//' '#{time_header}'`
 end

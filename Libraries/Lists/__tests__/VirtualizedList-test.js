@@ -12,15 +12,14 @@
 
 import React from 'react';
 import ReactTestRenderer from 'react-test-renderer';
-import VirtualizedListInjection from '../VirtualizedListInjection';
+import * as VirtualizedListInjection from '../VirtualizedListInjection';
 import VirtualizedList_EXPERIMENTAL from '../VirtualizedList_EXPERIMENTAL';
 
 const useExperimentalList =
   process.env.USE_EXPERIMENTAL_VIRTUALIZEDLIST === 'true';
 
 if (useExperimentalList) {
-  VirtualizedListInjection.unstable_VirtualizedList =
-    VirtualizedList_EXPERIMENTAL;
+  VirtualizedListInjection.inject(VirtualizedList_EXPERIMENTAL);
 }
 
 const VirtualizedList = require('../VirtualizedList');
@@ -702,6 +701,24 @@ it('unmounts sticky headers moved below viewport', () => {
   expect(component).toMatchSnapshot();
 });
 
+it('gracefully handles negaitve initialScrollIndex', () => {
+  const items = generateItems(10);
+  const ITEM_HEIGHT = 10;
+
+  const component = ReactTestRenderer.create(
+    <VirtualizedList
+      initialScrollIndex={-1}
+      initialNumToRender={4}
+      {...baseItemProps(items)}
+      {...fixedHeightItemLayoutProps(ITEM_HEIGHT)}
+    />,
+  );
+
+  // Existing code assumes we handle this in some way. Do something reasonable
+  // here.
+  expect(component).toMatchSnapshot();
+});
+
 it('renders offset cells in initial render when initialScrollIndex set', () => {
   const items = generateItems(10);
   const ITEM_HEIGHT = 10;
@@ -716,6 +733,23 @@ it('renders offset cells in initial render when initialScrollIndex set', () => {
   );
 
   // Check that the first render respects initialScrollIndex
+  expect(component).toMatchSnapshot();
+});
+
+it('initially renders nothing when initialNumToRender is 0', () => {
+  const items = generateItems(10);
+  const ITEM_HEIGHT = 10;
+
+  const component = ReactTestRenderer.create(
+    <VirtualizedList
+      initialNumToRender={0}
+      {...baseItemProps(items)}
+      {...fixedHeightItemLayoutProps(ITEM_HEIGHT)}
+    />,
+  );
+
+  // Only a spacer should be present (a single item is present in the legacy
+  // implementation)
   expect(component).toMatchSnapshot();
 });
 
@@ -1751,7 +1785,11 @@ function simulateContentLayout(component, dimensions) {
 
 function simulateCellLayout(component, items, itemIndex, dimensions) {
   const instance = component.getInstance();
-  const cellKey = instance._keyExtractor(items[itemIndex], itemIndex);
+  const cellKey = instance._keyExtractor(
+    items[itemIndex],
+    itemIndex,
+    instance.props,
+  );
   instance._onCellLayout(
     {nativeEvent: {layout: dimensions, zoomScale: 1}},
     cellKey,

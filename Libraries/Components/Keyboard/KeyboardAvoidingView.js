@@ -22,7 +22,7 @@ import type {
   ViewLayout,
   ViewLayoutEvent,
 } from '../View/ViewPropTypes';
-import type {KeyboardEvent, KeyboardEventCoordinates} from './Keyboard';
+import type {KeyboardEvent, KeyboardMetrics} from './Keyboard';
 
 type Props = $ReadOnly<{|
   ...ViewProps,
@@ -71,7 +71,7 @@ class KeyboardAvoidingView extends React.Component<Props, State> {
     this.viewRef = React.createRef();
   }
 
-  _relativeKeyboardHeight(keyboardFrame: KeyboardEventCoordinates): number {
+  _relativeKeyboardHeight(keyboardFrame: KeyboardMetrics): number {
     const frame = this._frame;
     // with iOS 14 & Reduce Motion > Prefer Cross-Fade Transitions enabled, the keyboard position
     // & height is reported differently (0 instead of Y position value matching height of frame)
